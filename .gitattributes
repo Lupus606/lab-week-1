@@ -1,2 +1,57 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+import base64
+from itertools import permutations
+
+# Caesar decryption function
+def caesar_decrypt(text, shift):
+    result = ""
+    for char in text:
+        if char.isalpha():
+            base = ord('a') if char.islower() else ord('A')
+            result += chr((ord(char) - base - shift) % 26 + base)
+        else:
+            result += char
+    return result
+
+ciphertext1 = "Hvs Eiwqy Pfckb Tcl Xiadg Cjsf Hvs Zonm Rcu."
+print(">>> Caesar Cipher Brute-force")
+for shift in range(26):
+    decrypted = caesar_decrypt(ciphertext1, shift)
+    print(f"Shift {shift}: {decrypted}")
+
+encrypted_passphrase = "mznxpz"
+
+possible_words = [
+    "secure", "rescue", "secret", "cipher", "decode",
+    "access", "encode", "crypto", "sentry", "cipher"
+]
+
+def find_passphrase(encrypted, wordlist):
+    for shift in range(26):
+        decrypted = caesar_decrypt(encrypted, shift)
+        for word in wordlist:
+            if sorted(decrypted) == sorted(word):
+                return decrypted, word, shift
+    return None, None, None
+
+decrypted_candidate, matched_word, used_shift = find_passphrase(encrypted_passphrase, possible_words)
+
+if decrypted_candidate:
+    print(f"\n>>> Found Caesar match: '{decrypted_candidate}' -> '{matched_word}' (Shift: {used_shift})")
+else:
+    print("\n>>> No passphrase match found.")
+
+def xor_decrypt(data_bytes, key):
+    decrypted_bytes = bytearray()
+    key_bytes = key.encode()
+    key_len = len(key_bytes)
+    for i in range(len(data_bytes)):
+        decrypted_bytes.append(data_bytes[i] ^ key_bytes[i % key_len])
+    return decrypted_bytes.decode(errors='ignore')
+
+if decrypted_candidate:
+    base64_ciphertext = "Jw0KBlIMAEUXHRdFKyoxVRENEgkPEBwCFkQ="
+    ciphertext_bytes = base64.b64decode(base64_ciphertext)
+    decrypted_message = xor_decrypt(ciphertext_bytes, matched_word)
+    print(f"\n>>> XOR Decryption with passphrase '{matched_word}':\n{decrypted_message}")
+else:
+    print("\n>>> Skipping XOR decryption. No valid passphrase.")
